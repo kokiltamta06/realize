@@ -3,6 +3,7 @@
 > A personal finance dashboard designed for young working professionals in India.
 > Built as a zero-dependency, single-file web app — no backend, no login, no friction.
 
+<img width="1438" height="818" alt="realize proof" src="https://github.com/user-attachments/assets/4e9803b1-8489-479a-9bcd-5d2845ebe404" />
 
 ---
 
