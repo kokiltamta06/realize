@@ -221,6 +221,3 @@ These are documented as known issues and are prioritised in the roadmap.
 
 ---
 
-
-
-*Open source under the MIT License. See `LICENSE` for details.*
