@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>₹ealize Finance | Elite 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,600;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-color: #e8ecf0;
+    --card-bg: #ffffff;
+    --text-main: #111111;
+    --text-muted: #8a96a3;
+    --accent: #0e0e0e;
+    --border-color: #e2e8f0;
+    --input-bg: #f4f6f8;
+    --nav-height: 70px;
+    --success: #3ecf8e;
+    --needs: #a78bfa;
+    --wants: #fbbf24;
+    --emergency: #3ecf8e;
+    --debt: #f87171;
+    --savings: #60a5fa;
+  }
+
+  /* SPLASH */
+  #splash-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #0e0e0e;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999; transition: opacity 0.8s ease-in-out, visibility 0.8s;
+  }
+  .splash-logo-box {
+    background: white; padding: 20px 40px; border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transform: scale(0.8); opacity: 0;
+    animation: zoomIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .splash-logo-box h1 { font-size: 2.5rem; font-weight: 800; color: #0e0e0e; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+  @keyframes zoomIn { to { transform: scale(1); opacity: 1; } }
+  .fade-out { opacity: 0; visibility: hidden; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0; color: var(--text-main);
+    height: 100vh; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    height: var(--nav-height);
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; width: 100%; flex-shrink: 0; z-index: 1000;
+  }
+  .logo-area { z-index: 20; }
+  .logo-area h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin: 0; text-transform: uppercase; cursor: default; letter-spacing: -0.5px; }
+  .logo-area span { font-weight: 300; opacity: 0.4; }
+
+  .filename-container {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%); z-index: 10;
+  }
+  .filename-container input {
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    padding: 10px 15px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.85rem;
+    text-align: center; outline: none; color: var(--text-main); width: 180px;
+    transition: all 0.2s ease;
+  }
+  .filename-container input:focus {
+    background: #ffffff; border-color: var(--accent); width: 220px;
+    box-shadow: 0 0 0 3px rgba(14,14,14,0.06);
+  }
+
+  .nav-right { display: flex; gap: 10px; z-index: 20; }
+  #uploadBtn, #resetAllBtn {
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    padding: 10px 20px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.82rem;
+    cursor: pointer; color: var(--text-main); transition: box-shadow 0.15s;
+  }
+  #uploadBtn:hover, #resetAllBtn:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  #navExportBtn {
+    background: var(--accent); color: white; border: none;
+    padding: 10px 24px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.82rem;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  #navExportBtn:hover { opacity: 0.85; }
+
+  /* MAIN WRAPPER — identical 3-col grid */
+  .main-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 20px;
+    max-width: 1500px; margin: 0 auto;
+    padding: 20px; flex-grow: 1;
+    overflow: hidden; width: 100%;
+  }
+  .side-panel { display: flex; flex-direction: column; gap: 20px; }
+  .grid-panel {
+    display: flex; flex-direction: column; gap: 20px;
+    overflow-y: auto; padding-right: 10px;
+    scrollbar-width: thin; scrollbar-color: #ccc transparent;
+  }
+  .grid-panel .glass-card { min-height: 240px; display: flex; flex-direction: column; }
+  .grid-panel [id$="List"] { flex-grow: 1; }
+  .grid-panel .add-btn { margin-top: 10px; }
+  .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* CARDS */
+  .glass-card {
+    background: var(--card-bg);
+    border-radius: 14px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid var(--border-color);
+  }
+
+  .card-title {
+    font-weight: 700; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); margin-bottom: 15px;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%; background: var(--input-bg);
+    border: 1px solid transparent; padding: 10px 12px;
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 0.9rem; outline: none;
+    color: var(--text-main); transition: border-color 0.15s;
+  }
+  input[type="number"]:focus, input[type="text"]:focus { border-color: #c8d0d8; background: white; }
+
+  /* HEALTH CHART */
+  .health-score-container { position: relative; width: 140px; margin: 0 auto; }
+  .score-value-text {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem; font-weight: 800;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* TABLE HEADER inside cards */
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .table-header h4 {
+    margin: 0; text-transform: uppercase; font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-muted);
+  }
+  .template-tag {
+    font-size: 0.6rem; background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    padding: 3px 8px; border-radius: 5px;
+    cursor: pointer; font-weight: 700; color: var(--text-muted);
+    transition: background 0.15s; margin-left: 6px;
+  }
+  .template-tag:hover { background: #e2e6ea; }
+
+  /* ADD BUTTON */
+  .add-btn {
+    width: 100%; background: transparent;
+    border: 1px dashed var(--border-color);
+    padding: 10px; border-radius: 8px;
+    color: var(--text-muted); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.78rem;
+    margin-top: 5px; margin-bottom: 15px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-btn:hover { border-color: #aaa; color: var(--text-main); }
+
+  /* TOGGLE */
+  .toggle {
+    width: 38px; height: 21px; background: #d1d5db;
+    border-radius: 20px; position: relative; cursor: pointer;
+    transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 15px; height: 15px; background: white;
+    border-radius: 50%; transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle.active { background: var(--accent); }
+  .toggle.active::after { left: 20px; }
+
+  /* REMOVE BTN */
+  .remove-row-btn {
+    background: none; border: none; color: #ccc;
+    cursor: pointer; font-weight: 800; font-size: 13px;
+    transition: color 0.15s; line-height: 1;
+  }
+  .remove-row-btn:hover { color: var(--debt); }
+
+  /* SAVINGS VALUE */
+  #savings {
+    font-family: 'DM Mono', monospace;
+    font-size: 2rem; font-weight: 500; letter-spacing: -1px;
+  }
+
+  /* GOAL PROGRESS */
+  #goalName, #goalTarget { margin-bottom: 8px; }
+
+  /* CALCULATOR */
+  #calcToggleBtn {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--accent); border: none; color: white;
+    font-size: 20px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 3000;
+    transition: transform 0.15s;
+  }
+  #calcToggleBtn:hover { transform: scale(1.08); }
+  #floatingCalc {
+    position: fixed; bottom: 80px; right: 20px; width: 275px;
+    background: white; border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 18px; display: none;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 3000;
+  }
+  .calc-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; }
+  .calc-btn {
+    padding: 12px; border: 1px solid var(--border-color);
+    background: var(--input-bg); border-radius: 8px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600;
+    font-size: 0.85rem; transition: background 0.1s;
+  }
+  .calc-btn:hover { background: #e6eaee; }
+
+  /* MODAL */
+  #statementModal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); z-index: 4000;
+    justify-content: center; align-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .sheet-modal-content {
+    background: white; width: 95%; max-width: 1100px;
+    height: 90vh; border-radius: 18px; padding: 40px;
+    display: flex; flex-direction: column; position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  }
+  .sheet-table-wrapper { flex: 1; overflow-y: auto; margin: 20px 0; border-top: 1px solid #f1f5f9; }
+  table.modal-table { width: 100%; border-collapse: collapse; }
+  table.modal-table th {
+    background: #fff; padding: 14px 12px; text-align: left;
+    position: sticky; top: 0; border-bottom: 1px solid #f1f5f9;
+    font-size: 0.78rem; font-weight: 700; z-index: 10;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+  }
+  table.modal-table td { padding: 11px 12px; border-bottom: 1px solid #f8f8f8; vertical-align: middle; }
+  .modal-input {
+    background: var(--input-bg); border: none; padding: 10px 12px;
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 0.82rem; color: var(--text-main);
+    outline: none; width: 100%;
+  }
+  .modal-select {
+    background: var(--input-bg); border: none; padding: 10px 12px;
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-weight: 600; outline: none; cursor: pointer;
+    appearance: none; width: 100%; color: var(--text-main);
+  }
+  .sync-btn {
+    background: var(--accent); color: white; font-family: 'DM Sans', sans-serif;
+    font-weight: 700; padding: 14px 40px; border-radius: 10px;
+    border: none; cursor: pointer; align-self: flex-end; transition: opacity 0.15s;
+  }
+  .sync-btn:hover { opacity: 0.85; }
+  .close-modal {
+    position: absolute; top: 28px; right: 28px;
+    cursor: pointer; font-size: 20px; color: var(--text-muted);
+    background: var(--input-bg); width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; transition: background 0.15s; line-height: 1;
+  }
+  .close-modal:hover { background: #e2e6ea; }
+
+  /* GOAL PROGRESS BAR */
+  #goalProgressBar { background: var(--accent) !important; }
+
+  /* PREVIEW MODAL */
+  #previewModal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 5000;
+    justify-content: center; align-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .preview-modal-wrap {
+    background: #f4f6f8; width: 95%; max-width: 780px;
+    max-height: 92vh; border-radius: 18px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.22); overflow: hidden;
+  }
+  .preview-toolbar {
+    background: white; padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+  }
+  .preview-toolbar span { font-weight: 700; font-size: 0.95rem; }
+  .preview-toolbar-right { display: flex; gap: 10px; }
+  .preview-close-btn {
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.8rem;
+  }
+  .preview-export-btn {
+    background: var(--accent); color: white; border: none;
+    padding: 8px 20px; border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.8rem;
+    transition: opacity 0.15s;
+  }
+  .preview-export-btn:hover { opacity: 0.85; }
+  .preview-scroll { overflow-y: auto; padding: 24px; flex: 1; }
+
+  /* THE ACTUAL EXPORT SHEET */
+  #exportSheet {
+    background: white; border-radius: 14px;
+    padding: 40px; font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .es-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #111; }
+  .es-brand { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; color: #111; }
+  .es-brand span { font-weight: 300; opacity: 0.4; }
+  .es-meta { text-align: right; }
+  .es-meta-name { font-size: 1rem; font-weight: 700; color: #111; }
+  .es-meta-date { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+  .es-summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .es-summary-card { background: #f4f6f8; border-radius: 10px; padding: 14px 16px; }
+  .es-summary-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 6px; }
+  .es-summary-value { font-size: 1.25rem; font-weight: 800; color: #111; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+  .es-summary-card.dark { background: #0e0e0e; }
+  .es-summary-card.dark .es-summary-label { color: #555; }
+  .es-summary-card.dark .es-summary-value { color: white; }
+
+  .es-section { margin-bottom: 24px; }
+  .es-section-title {
+    font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: #888; margin-bottom: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid #eee;
+  }
+  .es-table { width: 100%; border-collapse: collapse; }
+  .es-table tr td { padding: 9px 4px; font-size: 0.85rem; border-bottom: 1px solid #f5f5f5; }
+  .es-table tr td:last-child { text-align: right; font-family: 'DM Mono', monospace; font-weight: 600; }
+  .es-table tr.total-row td { font-weight: 800; border-top: 1px solid #ddd; border-bottom: none; padding-top: 10px; }
+  .es-table tr.empty-row td { color: #bbb; font-style: italic; font-size: 0.8rem; }
+
+  .es-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee; }
+  .es-health-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 8px; }
+  .es-health-score { font-size: 2.5rem; font-weight: 800; color: #111; font-family: 'DM Mono', monospace; }
+  .es-health-sub { font-size: 0.78rem; font-weight: 700; margin-top: 4px; }
+  .es-goal-bar-track { background: #edf2f7; height: 8px; border-radius: 10px; overflow: hidden; margin: 10px 0 6px; }
+  .es-goal-bar-fill { height: 100%; background: #0e0e0e; border-radius: 10px; }
+  .es-goal-meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: #888; font-weight: 600; }
+  .es-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 0.7rem; color: #bbb; font-weight: 600; }
+
+  @media print {
+    header, .nav-right, #calcToggleBtn, .add-btn, .remove-row-btn, .template-tag, .toggle { display: none !important; }
+    #splash-overlay { display: none !important; }
+    body { overflow: visible; height: auto; background: white; }
+    .main-wrapper { grid-template-columns: 1fr 1fr; gap: 40px; overflow: visible; display: block; }
+    .glass-card { break-inside: avoid; border: 1px solid #eee; box-shadow: none; margin-bottom: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="splash-overlay">
+  <div class="splash-logo-box">
+    <h1 id="splash-logo-text">₹EALIZE</h1>
+  </div>
+</div>
+
+<header>
+  <div class="logo-area"><h1>₹E<span>ALIZE</span></h1></div>
+  <div class="filename-container"><input type="text" id="reportNameInput" value="Untitled File" style="width:180px"></div>
+  <div class="nav-right">
+    <button id="resetAllBtn" onclick="confirmFullReset()">Reset All</button>
+    <button id="uploadBtn" onclick="document.getElementById('csvInput').click()">Upload Statement</button>
+    <input type="file" id="csvInput" style="display:none" accept=".csv" onchange="handleCSVUpload(event)">
+    <button id="navExportBtn" onclick="showPreview()">Preview & Export</button>
+  </div>
+</header>
+
+<div class="main-wrapper">
+  <div class="side-panel">
+    <div class="glass-card">
+      <div class="card-title">Monthly Income</div>
+      <input type="number" id="salary" placeholder="0" oninput="calculate()">
+    </div>
+    <div class="glass-card" style="text-align:center;">
+      <div class="card-title">Financial Health</div>
+      <div class="health-score-container">
+        <canvas id="healthChart" width="140" height="140"></canvas>
+        <div class="score-value-text" id="healthScore">0</div>
+      </div>
+      <div id="healthStatus" style="font-size: 0.78rem; font-weight: 700; margin-top: 15px; color: var(--text-muted);">Action Needed</div>
+    </div>
+  </div>
+
+  <div class="grid-panel">
+    <div class="grid-row">
+      <div class="glass-card">
+        <div class="table-header">
+          <h4>Needs <span class="template-tag" onclick="applyTemplate('needs', ['Rent', 'Groceries', 'Utilities'])">Auto-fill</span></h4>
+          <div class="toggle active" data-key="needs" onclick="toggleSection(this)"></div>
+        </div>
+        <div id="needsList"></div>
+        <button class="add-btn" onclick="addRow('needsList')">+ add needs</button>
+      </div>
+      <div class="glass-card">
+        <div class="table-header">
+          <h4>Wants <span class="template-tag" onclick="applyTemplate('wants', ['Netflix', 'Dining', 'Shopping'])">Auto-fill</span></h4>
+          <div class="toggle active" data-key="wants" onclick="toggleSection(this)"></div>
+        </div>
+        <div id="wantsList"></div>
+        <button class="add-btn" onclick="addRow('wantsList')">+ add wants</button>
+      </div>
+    </div>
+    <div class="grid-row">
+      <div class="glass-card">
+        <div class="table-header">
+          <h4>Emergency <span class="template-tag" onclick="applyTemplate('emergency', ['Insurance', 'Medical'])">Auto-fill</span></h4>
+          <div class="toggle active" data-key="emergency" onclick="toggleSection(this)"></div>
+        </div>
+        <div id="emergencyList"></div>
+        <button class="add-btn" onclick="addRow('emergencyList')">+ add emergency</button>
+      </div>
+      <div class="glass-card">
+        <div class="table-header">
+          <h4>Debt <span class="template-tag" onclick="applyTemplate('debt', ['EMI', 'Credit Card'])">Auto-fill</span></h4>
+          <div class="toggle active" data-key="debt" onclick="toggleSection(this)"></div>
+        </div>
+        <div id="debtList"></div>
+        <button class="add-btn" onclick="addRow('debtList')">+ add debt</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-panel">
+    <div class="glass-card">
+      <div class="card-title">Projected Savings</div>
+      <div style="font-size: 2.2rem; font-weight: 800; font-family: 'DM Mono', monospace; letter-spacing: -1px;" id="savings">₹ 0</div>
+    </div>
+    <div class="glass-card" id="goalCard">
+      <div class="card-title">Savings Goal</div>
+      <input type="text" id="goalName" placeholder="Goal" style="margin-bottom: 10px;" oninput="savePersistence()">
+      <input type="number" id="goalTarget" placeholder="Target" oninput="calculate()">
+      <div style="background: #edf2f7; height: 6px; border-radius: 10px; margin: 15px 0 8px; overflow: hidden;">
+        <div id="goalProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">
+        <span id="goalPercent">0%</span>
+        <span id="goalEstimate">-- mo left</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button id="calcToggleBtn" onclick="toggleCalc()">🖩</button>
+<div id="floatingCalc">
+  <div class="calc-display" id="calcDisplay" style="text-align:right; font-size:1.4rem; margin-bottom:10px; background:#f4f6f8; padding:10px; border-radius:8px; min-height:45px; font-family:'DM Mono',monospace;">0</div>
+  <div class="calc-grid">
+    <button class="calc-btn" onclick="clearCalc()">C</button><button class="calc-btn" onclick="appendToCalc('/')">/</button><button class="calc-btn" onclick="appendToCalc('*')">*</button><button class="calc-btn" onclick="backspaceCalc()">←</button>
+    <button class="calc-btn" onclick="appendToCalc('7')">7</button><button class="calc-btn" onclick="appendToCalc('8')">8</button><button class="calc-btn" onclick="appendToCalc('9')">9</button><button class="calc-btn" onclick="appendToCalc('-')">-</button>
+    <button class="calc-btn" onclick="appendToCalc('4')">4</button><button class="calc-btn" onclick="appendToCalc('5')">5</button><button class="calc-btn" onclick="appendToCalc('6')">6</button><button class="calc-btn" onclick="appendToCalc('+')">+</button>
+    <button class="calc-btn" onclick="appendToCalc('1')">1</button><button class="calc-btn" onclick="appendToCalc('2')">2</button><button class="calc-btn" onclick="appendToCalc('3')">3</button><button class="calc-btn" onclick="solveCalc()" style="background:var(--accent); color:white;">=</button>
+  </div>
+</div>
+
+<div id="statementModal">
+  <div class="sheet-modal-content">
+    <div class="close-modal" onclick="document.getElementById('statementModal').style.display='none'">✕</div>
+    <h2 style="margin:0; font-size: 2rem; font-weight: 800;">Analyze Statement</h2>
+    <div class="sheet-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th width="100">Select <input type="checkbox" id="selectAllSync" onclick="toggleSelectAll(this)"></th>
+            <th>Description</th>
+            <th width="180">Amount</th>
+            <th width="180">Category</th>
+          </tr>
+        </thead>
+        <tbody id="csvDataBody"></tbody>
+      </table>
+    </div>
+    <button class="sync-btn" onclick="syncStatementData()">Sync Selected Data</button>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div id="previewModal">
+  <div class="preview-modal-wrap">
+    <div class="preview-toolbar">
+      <span>📄 Preview Export</span>
+      <div class="preview-toolbar-right">
+        <button class="preview-close-btn" onclick="document.getElementById('previewModal').style.display='none'">Close</button>
+        <button class="preview-export-btn" onclick="exportToPDF()">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div class="preview-scroll">
+      <div id="exportSheet">
+        <!-- filled by showPreview() -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('splash-overlay').classList.add('fade-out');
+    }, 1800);
+  });
+
+  let healthChart;
+  const sectionState = { needs: true, wants: true, emergency: true, debt: true };
+  const categories = ['needs', 'wants', 'emergency', 'debt'];
+
+  window.onload = () => { initChart(); loadPersistence(); };
+
+  function initChart() {
+    const ctx = document.getElementById('healthChart').getContext('2d');
+    healthChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['Needs', 'Wants', 'Emergency', 'Debt', 'Savings'], datasets: [{ data: [0, 0, 0, 0, 100], backgroundColor: ['#a78bfa', '#fbbf24', '#3ecf8e', '#f87171', '#60a5fa'], borderWidth: 0 }] },
+      options: { cutout: '85%', plugins: { legend: { display: false } }, animation: false }
+    });
+  }
+
+  function cleanDescription(desc) {
+    if (!desc) return "Transaction";
+    let clean = desc.toUpperCase();
+    const noise = [/UPI-/, /PI-/, /SETTLEMENT-/, /TRANSFER-/, /PAYMENT TO/, /REF-/, /ID:/, /TXN/, /@OK[A-Z]+/, /@PAYTM UPI/];
+    noise.forEach(p => clean = clean.replace(p, ''));
+    clean = clean.replace(/-[A-Z0-9]{8,}/g, '').replace(/[0-9]{12,}/g, '');
+    return clean.replace(/[-_]/g, ' ').trim() || "Transaction";
+  }
+
+  function handleCSVUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const rows = e.target.result.split('\n').map(r => r.trim()).filter(r => r !== '');
+      const body = document.getElementById('csvDataBody');
+      body.innerHTML = '';
+      if (rows.length < 2) return;
+      const headers = rows[0].toLowerCase().split(',').map(h => h.replace(/"/g, '').trim());
+      let dIdx = headers.findIndex(h => h.includes('desc') || h.includes('particular') || h.includes('narration') || h.includes('details'));
+      let aIdx = headers.findIndex(h => h.includes('amt') || h.includes('amount') || h.includes('value') || h.includes('debit') || h.includes('withdrawal'));
+      if (dIdx === -1) dIdx = 1; if (aIdx === -1) aIdx = 2;
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/"/g, '').trim());
+        if (cols.length < 2) continue;
+        const descVal = cleanDescription(cols[dIdx]);
+        let rawAmt = (cols[aIdx] || "0").replace(/[^\d.-]/g, '');
+        let amtVal = Math.abs(parseFloat(rawAmt)) || 0;
+        if (amtVal > 0) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><input type="checkbox" class="sync-check"></td><td><input type="text" class="modal-input" value="${descVal}"></td><td><input type="number" class="modal-input" value="${amtVal}"></td><td><select class="modal-select"><option value="needsList">Needs</option><option value="wantsList">Wants</option><option value="emergencyList">Emergency</option><option value="debtList">Debt</option></select></td>`;
+          body.appendChild(tr);
+        }
+      }
+      document.getElementById('statementModal').style.display = 'flex';
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function syncStatementData() {
+    document.querySelectorAll('#csvDataBody tr').forEach(r => {
+      if (r.querySelector('.sync-check').checked) {
+        addRow(r.querySelector('select').value, r.querySelectorAll('input')[1].value, r.querySelectorAll('input')[2].value);
+      }
+    });
+    document.getElementById('statementModal').style.display = 'none';
+    calculate();
+  }
+
+  function addRow(id, l = '', v = 0) {
+    const d = document.createElement('div');
+    d.style = 'display: grid; grid-template-columns: 1fr 80px 30px; gap: 10px; margin-bottom: 8px; align-items:center;';
+    d.innerHTML = `<input type="text" value="${l}" oninput="savePersistence()"><input type="number" value="${v}" oninput="calculate()"><button onclick="this.parentElement.remove(); calculate()" class="remove-row-btn">✕</button>`;
+    document.getElementById(id).appendChild(d);
+    calculate();
+  }
+
+  function calculate() {
+    const s = parseFloat(document.getElementById('salary').value) || 0;
+    const t = { needs: 0, wants: 0, emergency: 0, debt: 0 };
+    categories.forEach(c => {
+      document.querySelectorAll(`#${c}List div`).forEach(r => {
+        t[c] += parseFloat(r.querySelectorAll('input')[1].value) || 0;
+      });
+    });
+    const a = categories.reduce((acc, c) => acc + (sectionState[c] ? t[c] : 0), 0);
+    const sav = Math.max(0, s - a);
+    document.getElementById('savings').textContent = '₹ ' + sav.toLocaleString('en-IN');
+    const healthScore = s > 0 ? (sav / s) * 100 : 0;
+    document.getElementById('healthScore').textContent = Math.round(healthScore);
+    const status = document.getElementById('healthStatus');
+    if (healthScore > 40) { status.textContent = "Stable"; status.style.color = "#3ecf8e"; }
+    else { status.textContent = "Action Needed"; status.style.color = "#f87171"; }
+    healthChart.data.datasets[0].data = [t.needs, t.wants, t.emergency, t.debt, sav];
+    healthChart.update();
+    const target = parseFloat(document.getElementById('goalTarget').value) || 0;
+    if (target > 0) {
+      const progress = Math.min(100, (sav / target) * 100);
+      document.getElementById('goalProgressBar').style.width = progress + "%";
+      document.getElementById('goalPercent').textContent = Math.round(progress) + "%";
+      document.getElementById('goalEstimate').textContent = (sav > 0) ? Math.ceil(target / sav) + " mo left" : "-- mo left";
+    }
+    savePersistence();
+  }
+
+  function toggleCalc() { const c = document.getElementById('floatingCalc'); c.style.display = c.style.display === 'block' ? 'none' : 'block'; }
+  function appendToCalc(v) { let d = document.getElementById('calcDisplay'); d.textContent = d.textContent === '0' ? v : d.textContent + v; }
+  function clearCalc() { document.getElementById('calcDisplay').textContent = '0'; }
+  function solveCalc() { try { document.getElementById('calcDisplay').textContent = eval(document.getElementById('calcDisplay').textContent); } catch(e) {} }
+  function backspaceCalc() { const d = document.getElementById('calcDisplay'); d.textContent = d.textContent.slice(0, -1) || '0'; }
+  function applyTemplate(c, items) { items.forEach(i => addRow(`${c}List`, i, 0)); }
+  function toggleSection(el) { el.classList.toggle('active'); sectionState[el.dataset.key] = el.classList.contains('active'); calculate(); }
+  function confirmFullReset() { if(confirm("Clear all data and start fresh?")) { localStorage.clear(); location.reload(); } }
+  function toggleSelectAll(master) { document.querySelectorAll('.sync-check').forEach(c => c.checked = master.checked); }
+  function showPreview() {
+    const salary = parseFloat(document.getElementById('salary').value) || 0;
+    const t = { needs: 0, wants: 0, emergency: 0, debt: 0 };
+    const lists = { needs: [], wants: [], emergency: [], debt: [] };
+    categories.forEach(c => {
+      document.querySelectorAll(`#${c}List div`).forEach(r => {
+        const label = r.querySelectorAll('input')[0].value || '—';
+        const val = parseFloat(r.querySelectorAll('input')[1].value) || 0;
+        t[c] += val;
+        lists[c].push({ label, val });
+      });
+    });
+    const totalExp = categories.reduce((a, c) => a + (sectionState[c] ? t[c] : 0), 0);
+    const savings = Math.max(0, salary - totalExp);
+    const score = salary > 0 ? Math.round((savings / salary) * 100) : 0;
+    const scoreColor = score > 40 ? '#3ecf8e' : score > 20 ? '#fbbf24' : '#f87171';
+    const scoreLabel = score > 40 ? 'Stable' : score > 20 ? 'Moderate' : 'Action Needed';
+    const goalName = document.getElementById('goalName').value || '—';
+    const goalTarget = parseFloat(document.getElementById('goalTarget').value) || 0;
+    const goalProg = goalTarget > 0 ? Math.min(100, (savings / goalTarget) * 100) : 0;
+    const goalMonths = savings > 0 && goalTarget > 0 ? Math.ceil(goalTarget / savings) : 0;
+    const reportName = document.getElementById('reportNameInput').value || 'Untitled File';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+    function buildRows(arr) {
+      if (!arr.length) return `<tr class="empty-row"><td colspan="2">No items added</td></tr>`;
+      return arr.map(i => `<tr><td>${i.label}</td><td>${fmt(i.val)}</td></tr>`).join('');
+    }
+
+    document.getElementById('exportSheet').innerHTML = `
+      <div class="es-header">
+        <div class="es-brand">₹E<span>ALIZE</span></div>
+        <div class="es-meta">
+          <div class="es-meta-name">${reportName}</div>
+          <div class="es-meta-date">Generated on ${dateStr}</div>
+        </div>
+      </div>
+
+      <div class="es-summary-row">
+        <div class="es-summary-card">
+          <div class="es-summary-label">Monthly Income</div>
+          <div class="es-summary-value">${fmt(salary)}</div>
+        </div>
+        <div class="es-summary-card">
+          <div class="es-summary-label">Total Expenses</div>
+          <div class="es-summary-value">${fmt(totalExp)}</div>
+        </div>
+        <div class="es-summary-card dark">
+          <div class="es-summary-label">Projected Savings</div>
+          <div class="es-summary-value">${fmt(savings)}</div>
+        </div>
+        <div class="es-summary-card">
+          <div class="es-summary-label">Health Score</div>
+          <div class="es-summary-value" style="color:${scoreColor}">${score}%</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="es-section">
+          <div class="es-section-title">Needs</div>
+          <table class="es-table">
+            ${buildRows(lists.needs)}
+            <tr class="total-row"><td>Total</td><td>${fmt(t.needs)}</td></tr>
+          </table>
+        </div>
+        <div class="es-section">
+          <div class="es-section-title">Wants</div>
+          <table class="es-table">
+            ${buildRows(lists.wants)}
+            <tr class="total-row"><td>Total</td><td>${fmt(t.wants)}</td></tr>
+          </table>
+        </div>
+        <div class="es-section">
+          <div class="es-section-title">Emergency</div>
+          <table class="es-table">
+            ${buildRows(lists.emergency)}
+            <tr class="total-row"><td>Total</td><td>${fmt(t.emergency)}</td></tr>
+          </table>
+        </div>
+        <div class="es-section">
+          <div class="es-section-title">Debt</div>
+          <table class="es-table">
+            ${buildRows(lists.debt)}
+            <tr class="total-row"><td>Total</td><td>${fmt(t.debt)}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="es-bottom">
+        <div>
+          <div class="es-health-label">Financial Health</div>
+          <div class="es-health-score" style="color:${scoreColor}">${score}</div>
+          <div class="es-health-sub" style="color:${scoreColor}">${scoreLabel}</div>
+        </div>
+        <div>
+          <div class="es-health-label">Savings Goal — ${goalName}</div>
+          ${goalTarget > 0 ? `
+            <div style="font-size:0.82rem;color:#888;margin-bottom:4px;">Target: ${fmt(goalTarget)}</div>
+            <div class="es-goal-bar-track">
+              <div class="es-goal-bar-fill" style="width:${goalProg.toFixed(1)}%"></div>
+            </div>
+            <div class="es-goal-meta">
+              <span>${goalProg.toFixed(1)}% reached</span>
+              <span>${goalMonths > 0 ? goalMonths + ' mo left' : '—'}</span>
+            </div>
+          ` : `<div style="font-size:0.82rem;color:#bbb;margin-top:8px;">No goal set</div>`}
+        </div>
+      </div>
+
+      <div class="es-footer">
+        <span>₹ealize Finance · Elite 2026</span>
+        <span>${reportName} · ${dateStr}</span>
+      </div>
+    `;
+
+    document.getElementById('previewModal').style.display = 'flex';
+  }
+
+  function exportToPDF() {
+    const btn = document.querySelector('.preview-export-btn');
+    btn.textContent = 'Exporting…'; btn.disabled = true;
+    const sheet = document.getElementById('exportSheet');
+    html2canvas(sheet, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW - 20;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const img = canvas.toDataURL('image/png');
+      let y = 10;
+      if (imgH <= pageH - 20) {
+        pdf.addImage(img, 'PNG', 10, y, imgW, imgH);
+      } else {
+        // multi-page
+        let remaining = imgH;
+        let srcY = 0;
+        while (remaining > 0) {
+          const sliceH = Math.min(pageH - 20, remaining);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = (sliceH / imgH) * canvas.height;
+          const ctx = sliceCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, srcY * (canvas.height / imgH), canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+          pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 10, 10, imgW, sliceH);
+          remaining -= sliceH;
+          srcY += sliceH;
+          if (remaining > 0) pdf.addPage();
+        }
+      }
+      const reportName = document.getElementById('reportNameInput').value || 'realize-report';
+      pdf.save(reportName.replace(/\s+/g, '_') + '.pdf');
+      btn.textContent = '⬇ Download PDF'; btn.disabled = false;
+    });
+  }
+
+  function savePersistence() {
+    const items = {};
+    categories.forEach(c => {
+      items[c] = Array.from(document.querySelectorAll(`#${c}List div`)).map(r => ({ l: r.querySelectorAll('input')[0].value, v: r.querySelectorAll('input')[1].value }));
+    });
+    localStorage.setItem('realize_elite_v2', JSON.stringify({
+      salary: document.getElementById('salary').value,
+      reportName: document.getElementById('reportNameInput').value,
+      goalName: document.getElementById('goalName').value,
+      goalTarget: document.getElementById('goalTarget').value,
+      items
+    }));
+  }
+
+  function loadPersistence() {
+    const saved = localStorage.getItem('realize_elite_v2');
+    if(saved) {
+      const d = JSON.parse(saved);
+      document.getElementById('salary').value = d.salary || 0;
+      document.getElementById('reportNameInput').value = d.reportName || 'Untitled File';
+      document.getElementById('goalName').value = d.goalName || '';
+      document.getElementById('goalTarget').value = d.goalTarget || 0;
+      if(d.items) categories.forEach(c => d.items[c].forEach(i => addRow(`${c}List`, i.l, i.v)));
+      calculate();
+    }
+  }
+</script>
+</body>
+</html>
